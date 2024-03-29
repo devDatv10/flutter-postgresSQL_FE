@@ -1,0 +1,5 @@
+{
+    "dataworkspace.excludedProjects": [
+        "PostGres SQL/PostGres SQL.sqlproj"
+    ]
+}

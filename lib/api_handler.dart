@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class ApiHandler {
   // Your API URL here
-  final String baseUrl = "http://localhost:8082/api/patients";
+  final String baseUrl = "http://192.168.1.10:8082/api/patients";
 
   // Get data from API
   Future<List<Patient>> getPatients() async {
