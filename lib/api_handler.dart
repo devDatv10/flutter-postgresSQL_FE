@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class ApiHandler {
   // Your API URL here
-  final String baseUrl = "http://192.168.1.10:8082/api/patients";
+  final String baseUrl = "http://192.168.1.228:8082/api/patients";
 
   // Get data from API
   Future<List<Patient>> getPatients() async {
@@ -66,6 +66,29 @@ class ApiHandler {
       }
     } catch (e) {
       throw Exception('Failed to delete patient: $e');
+    }
+  }
+
+  // Update data in API
+  Future<void> updatePatient(Patient patient) async {
+    final uri = Uri.parse('$baseUrl');
+    try {
+      final response = await http.put(
+        uri,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(patient.toJson()),
+      );
+      if (response.statusCode == 200) {
+        // Patient updated successfully
+        print('Patient updated successfully');
+      } else {
+        // Failed to update patient
+        throw Exception('Failed to update patient: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to update patient: $e');
     }
   }
 }

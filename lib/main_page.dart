@@ -10,9 +10,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  // Create an instance of the API handler
   ApiHandler api = ApiHandler();
   late List<Patient> data = [];
   late bool _isAddingPatient = false;
+  late bool _isEditing = false;
 
   // Controllers to handle user input
   TextEditingController idController = TextEditingController();
@@ -23,11 +25,12 @@ class _MainPageState extends State<MainPage> {
   TextEditingController genderController = TextEditingController();
 
   @override
+  // State initialization
   void initState() {
     super.initState();
     getData();
   }
-
+  // Function to get data from API
   void getData() async {
     List<Patient> newData = await api.getPatients();
     setState(() {
@@ -38,19 +41,13 @@ class _MainPageState extends State<MainPage> {
   void toggleAddForm() {
     setState(() {
       _isAddingPatient = !_isAddingPatient;
+      _isEditing = false;
     });
   }
 
-  // Add new patient
+  // Function to add patient
   void addPatient() async {
     try {
-      // print('ID: ${idController.text}');
-      // print('Name: ${nameController.text}');
-      // print('Address: ${addressController.text}');
-      // print('City: ${cityController.text}');
-      // print('Age: ${ageController.text}');
-      // print('Gender: ${genderController.text}');
-      // Create a new patient object using the values from text controllers
       Patient newPatient = Patient(
         id: idController.text.trim(),
         name: nameController.text.trim(),
@@ -81,13 +78,63 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  // Delete patient
+  // Function to delete patient
   void deletePatient(String id) async {
     try {
       await api.deletePatient(id);
       getData();
     } catch (e) {
       print("Error deleting patient: $e");
+    }
+  }
+
+  // Function show information of patient to edit
+  void editPatient(Patient patient) {
+    setState(() {
+      // Get the patient data and set it to the text controllers
+      idController.text = patient.id;
+      nameController.text = patient.name;
+      addressController.text = patient.address;
+      cityController.text = patient.city;
+      ageController.text = patient.age.toString();
+      genderController.text = patient.gender;
+
+      // Show the add and update form
+      _isAddingPatient = true;
+      _isEditing = true;
+    });
+  }
+
+// Function to update patient
+  void updatePatient() async {
+    try {
+      // Create a new patient object using the values from text controllers
+      Patient updatedPatient = Patient(
+        id: idController.text.trim(),
+        name: nameController.text.trim(),
+        address: addressController.text.trim(),
+        city: cityController.text.trim(),
+        age: int.parse(ageController.text.trim()),
+        gender: genderController.text.trim(),
+      );
+
+      // Call the updatePatient method from the API handler
+      await api.updatePatient(updatedPatient);
+
+      // Get the updated data from the API
+      getData();
+
+      // Delete text controllers
+      idController.clear();
+      nameController.clear();
+      addressController.clear();
+      cityController.clear();
+      ageController.clear();
+      genderController.clear();
+      _isAddingPatient = false;
+      _isEditing = false;
+    } catch (e) {
+      print("Error updating patient: $e");
     }
   }
 
@@ -131,8 +178,8 @@ class _MainPageState extends State<MainPage> {
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: addPatient,
-                    child: Text('Save'),
+                    onPressed: _isEditing ? updatePatient : addPatient,
+                    child: Text(_isEditing ? 'Update' : 'Save'),
                   ),
                 ],
               ),
@@ -143,22 +190,38 @@ class _MainPageState extends State<MainPage> {
                 return ListTile(
                   leading: Icon(Icons.person),
                   title: Text('Name: ${data[index].name}'),
-                  subtitle: Text('Age: ${data[index].age} - Male: ${data[index].gender} \nAddress: ${data[index].address} - City: ${data[index].city}'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      deletePatient(data[index].id);
-                    },
+                  subtitle: Text(
+                      'Age: ${data[index].age} - Male: ${data[index].gender} \nAddress: ${data[index].address} - City: ${data[index].city}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          editPatient(data[index]);
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          deletePatient(data[index].id);
+                        },
+                      ),
+                    ],
                   ),
-                  onTap: () {
-                    // Navigate to patient detail page or implement edit functionality
-                  },
+                  onTap: () {},
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          toggleAddForm();
+          if (_isAddingPatient) {
+            toggleAddForm();
+          } else {
+            // Check if the user is adding or editing a patient record
+            _isEditing = false;
+            toggleAddForm();
+          }
         },
         child: Icon(
           Icons.add,
@@ -168,14 +231,4 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
-
-  // void deletePatient(String id) async {
-  //   try {
-  //     await api.deletePatient(id);
-  //     getData(); // Refresh the patient list after deletion
-  //   } catch (e) {
-  //     print("Error deleting patient: $e");
-  //     // Handle error if needed
-  //   }
-  // }
 }
